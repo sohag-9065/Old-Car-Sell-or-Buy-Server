@@ -21,31 +21,52 @@ async function run() {
         const Brand = client.db('oldCar').collection('brand');
         const Category = client.db('oldCar').collection('brandCategory');
         const usersCollection = client.db('oldCar').collection('users');
+        const ordersCollection = client.db('oldCar').collection('myOrders');
 
 
         // user token generate by email 
         app.get('/user/token/:email', async (req, res) => {
             const email = req.params.email;
-            console.log("token: ",email);
+            // console.log("token: ", email);
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
             res.send({ token });
         })
 
-        // user token generate by email 
-        app.put('/user/:email', async (req, res) => {
+        // Store user Information 
+        app.put('/user/info/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
-            console.log("email: ", email);
-            console.log("user: ",user);
+            // console.log("email: ", email);
+            // console.log("user: ", user);
             const filter = { email: email };
             const options = { upsert: true };
             const updateDoc = {
                 $set: user,
             };
             const result = await usersCollection.updateOne(filter, updateDoc, options);
-            
-            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
-            res.send({ result, token });
+            res.send(result);
+        })
+
+        // get user status 
+        app.get('/user/status/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await usersCollection.findOne({ email: email });
+            // console.log("Status", user);
+            return res.send(user);
+        })
+
+         // get all seller 
+         app.get('/sellers', async (req, res) => {
+            const query = { status: "Seller" }
+            const seller = await usersCollection.find(query).toArray();
+            return res.send(seller);
+        })
+
+        // get all seller 
+        app.get('/buyers', async (req, res) => {
+            const query = { status: "Buyers" }
+            const seller = await usersCollection.find(query).toArray();
+            return res.send(seller);
         })
 
         // get all brand info 
@@ -68,11 +89,7 @@ async function run() {
         // get  products by  Category  
         app.get('/category/:name', async (req, res) => {
             const name = req.params.name;
-            const query = {
-                categotyName: name,
-                booked: ""
-            }
-            // console.log("name: ", name);
+            const query = { categotyName: name }
             // console.log(query);
             const singleCarCategory = await Category.find(query).toArray();
             res.send(singleCarCategory);
@@ -92,9 +109,27 @@ async function run() {
 
             const carBrandInfo = await Brand.find(brandName).toArray();
 
-            console.log(carBrandInfo)
+            // console.log(carBrandInfo)
             res.send(result);
         })
+
+
+        // get user orders 
+        app.get('/order/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { BuyerEmail: email }
+            const result = await ordersCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        // add user orders 
+        app.post('/order/add', async (req, res) => {
+            const order = req.body;
+            console.log(order)
+            const result = await ordersCollection.insertOne(order);
+            res.send(result);
+        });
+
 
         // get  products by  Advertised  
         app.get('/advertised', async (req, res) => {
