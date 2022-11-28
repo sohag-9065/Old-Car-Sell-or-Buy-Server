@@ -23,6 +23,13 @@ async function run() {
         const usersCollection = client.db('oldCar').collection('users');
 
 
+        // user token generate by email 
+        app.get('/user/token/:email', async (req, res) => {
+            const email = req.params.email;
+            console.log("token: ",email);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            res.send({ token });
+        })
 
         // user token generate by email 
         app.put('/user/:email', async (req, res) => {
