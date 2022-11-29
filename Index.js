@@ -32,7 +32,7 @@ async function run() {
             res.send({ token });
         })
 
-        // Store user Information 
+        // Update user Information 
         app.put('/user/info/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
@@ -50,9 +50,9 @@ async function run() {
         // get user status 
         app.get('/user/status/:email', async (req, res) => {
             const email = req.params.email;
-          //  console.log("status: ",email)
+           console.log("status: ",email)
             const user = await usersCollection.findOne({ email: email });
-          //  console.log("Status", user);
+           console.log("Status", user); 
             return res.send(user);
         })
 
@@ -63,12 +63,22 @@ async function run() {
             return res.send(seller);
         })
 
-        // get all seller 
+        // get all buyers 
         app.get('/buyers', async (req, res) => {
             const query = { status: "Buyers" }
             const seller = await usersCollection.find(query).toArray();
             return res.send(seller);
         })
+
+        // Delete user  ( buyers || sellers)
+        app.delete('/user/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await usersCollection.deleteOne(filter);
+            res.send(result);
+        });
+
+
 
         // get all brand info 
         app.get('/brand', async (req, res) => {
@@ -80,20 +90,21 @@ async function run() {
 
         // get update brand quantity 
         app.patch('/brand/:categotyName', async (req, res) => {
-            const categotyName = req.params.categotyName;
+            const categotyName = req.params?.categotyName;
             const action = req.body.action;
+            console.log("brand categotyName: ", categotyName)
             const query = {categotyName: categotyName}
             const carBrandInfo = await Brand.findOne(query);
           //  console.log(carBrandInfo);
+          const options = { upsert: true };
             let quantity = 1;
             if(action === "increment"){
-                quantity = parseInt(carBrandInfo.quantity) + 1;
+                quantity = parseInt(carBrandInfo?.quantity) + 1;
             }
             else{
-                quantity = parseInt(carBrandInfo.quantity) - 1;
+                quantity = parseInt(carBrandInfo?.quantity) - 1;
             }
 
-            const options = { upsert: true };
             const updateDoc = {
                 $set: {quantity: quantity},
             };
@@ -182,6 +193,14 @@ async function run() {
             const order = req.body;
             // console.log(order);
             const result = await ordersCollection.insertOne(order);
+            res.send(result);
+        });
+
+        //  Delete order
+        app.delete('/order/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await ordersCollection.deleteOne(filter);
             res.send(result);
         });
 
