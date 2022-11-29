@@ -15,6 +15,25 @@ app.use(express.json());
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.akdywg4.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+
+// authorization check unction 
+function verifyJWT(req, res, next) {
+    const authHeader = req.headers.authorization;
+    // console.log("first")
+    if (!authHeader) {
+        return res.status(401).send({ message: 'unauthorized access' });
+    }
+    const token = authHeader.split(' ')[1];
+
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: 'Forbidden access' });
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
+
 async function run() {
     try {
         // create database collection 
@@ -36,13 +55,27 @@ async function run() {
         app.put('/user/info/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
-          //  console.log("email: ", email);
+          ////  console.log("email: ", email);
             // console.log("user: ", user);
             const filter = { email: email };
             const options = { upsert: true };
             const updateDoc = {
                 $set: user,
             };
+            if(user.verified){
+              //  console.log(user.verified)
+                const userProducts = await Category.find({sellerEmail: email}).toArray();
+              //  console.log(userProducts);
+                const query = {sellerEmail: email};
+
+                const updatedDoc = {
+                    $set: {verified: "Yes"}
+                }
+                const result = await Category.updateMany(query, updatedDoc);
+              //  console.log("user verified: ",result);
+
+            }
+
             const result = await usersCollection.updateOne(filter, updateDoc, options);
             res.send(result);
         })
@@ -50,9 +83,9 @@ async function run() {
         // get user status 
         app.get('/user/status/:email', async (req, res) => {
             const email = req.params.email;
-           console.log("status: ",email)
+         //  console.log("status: ",email)
             const user = await usersCollection.findOne({ email: email });
-           console.log("Status", user); 
+         //  console.log("Status", user); 
             return res.send(user);
         })
 
@@ -71,7 +104,7 @@ async function run() {
         })
 
         // Delete user  ( buyers || sellers)
-        app.delete('/user/:id', async (req, res) => {
+        app.delete('/user/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
             const result = await usersCollection.deleteOne(filter);
@@ -92,10 +125,10 @@ async function run() {
         app.patch('/brand/:categotyName', async (req, res) => {
             const categotyName = req.params?.categotyName;
             const action = req.body.action;
-            console.log("brand categotyName: ", categotyName)
+          //  console.log("brand categotyName: ", categotyName)
             const query = {categotyName: categotyName}
             const carBrandInfo = await Brand.findOne(query);
-          //  console.log(carBrandInfo);
+          ////  console.log(carBrandInfo);
           const options = { upsert: true };
             let quantity = 1;
             if(action === "increment"){
@@ -115,7 +148,7 @@ async function run() {
         })
 
 
-        // get all brand Category  
+        // get Products 
         app.get('/category', async (req, res) => {
 
             const query = {}
@@ -232,7 +265,7 @@ async function run() {
          app.patch('/payment/:id', async (req, res) => {
             const id = req.params.id;
             const ProductId = req?.body?.ProductId;
-           console.log("id: ", id)
+         //  console.log("id: ", id)
             const query = { _id: ObjectId(id) }
             const updatedDoc = {
                 $set: { payment: 'Yes' }
@@ -247,7 +280,7 @@ async function run() {
 
 
 
-       console.log("DB connect")
+      console.log("DB connect")
     }
     finally {
 
@@ -261,7 +294,7 @@ app.get('/', (req, res) => {
 })
 
 app.listen(port, () => {
-   console.log(`Old Car app listening on port ${port}`)
+  console.log(`Old Car app listening on port ${port}`)
 })
 
 
