@@ -36,7 +36,7 @@ async function run() {
         app.put('/user/info/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
-            console.log("email: ", email);
+          //  console.log("email: ", email);
             // console.log("user: ", user);
             const filter = { email: email };
             const options = { upsert: true };
@@ -50,9 +50,9 @@ async function run() {
         // get user status 
         app.get('/user/status/:email', async (req, res) => {
             const email = req.params.email;
-            console.log("status: ",email)
+          //  console.log("status: ",email)
             const user = await usersCollection.findOne({ email: email });
-            console.log("Status", user);
+          //  console.log("Status", user);
             return res.send(user);
         })
 
@@ -84,7 +84,7 @@ async function run() {
             const action = req.body.action;
             const query = {categotyName: categotyName}
             const carBrandInfo = await Brand.findOne(query);
-            console.log(carBrandInfo);
+          //  console.log(carBrandInfo);
             let quantity = 1;
             if(action === "increment"){
                 quantity = parseInt(carBrandInfo.quantity) + 1;
@@ -126,7 +126,10 @@ async function run() {
         // get  products by  Category  
         app.get('/category/:name', async (req, res) => {
             const name = req.params.name;
-            const query = { categotyName: name }
+            const query = { 
+                categotyName: name ,
+                payment: ""
+            }
             // console.log(query);
             const singleCarCategory = await Category.find(query).toArray();
             res.send(singleCarCategory);
@@ -140,23 +143,30 @@ async function run() {
             res.send(result);
         });
 
-        // update products 
+        // update products info
         app.patch('/category/:id', async (req, res) => {
             const id = req.params.id;
-            const brandName = req.body
+            const updateInfo = req.body;
             // console.log(review);
             // console.log(id)
             const query = { _id: ObjectId(id) }
             const updatedDoc = {
-                $set: { booked: 'Yes' }
+                $set: updateInfo
             }
             const result = await Category.updateOne(query, updatedDoc);
-
-            const carBrandInfo = await Brand.find(brandName).toArray();
 
             // console.log(carBrandInfo)
             res.send(result);
         })
+
+
+         //  Delete product
+         app.delete('/category/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await Category.deleteOne(filter);
+            res.send(result);
+        });
 
 
         // get user orders 
@@ -191,7 +201,7 @@ async function run() {
             const name = req.params.name;
             const query = {
                 advertised: "Yes",
-                booked: ""
+                payment: ""
             }
             const advertisedCategory = await Category.find(query).toArray();
             res.send(advertisedCategory);
@@ -199,7 +209,26 @@ async function run() {
 
 
 
-        console.log("DB connect")
+         // update products info and order info
+         app.patch('/payment/:id', async (req, res) => {
+            const id = req.params.id;
+            const ProductId = req?.body?.ProductId;
+           console.log("id: ", id)
+            const query = { _id: ObjectId(id) }
+            const updatedDoc = {
+                $set: { payment: 'Yes' }
+            }
+            const result = await ordersCollection.updateOne(query, updatedDoc);
+            const filter = { _id: ObjectId(ProductId) }
+
+            const payment = await Category.updateOne(filter, updatedDoc);
+
+            res.send(result);
+        })
+
+
+
+       console.log("DB connect")
     }
     finally {
 
@@ -213,7 +242,7 @@ app.get('/', (req, res) => {
 })
 
 app.listen(port, () => {
-    console.log(`Old Car app listening on port ${port}`)
+   console.log(`Old Car app listening on port ${port}`)
 })
 
 
