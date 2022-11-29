@@ -36,7 +36,7 @@ async function run() {
         app.put('/user/info/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
-            // console.log("email: ", email);
+            console.log("email: ", email);
             // console.log("user: ", user);
             const filter = { email: email };
             const options = { upsert: true };
@@ -50,8 +50,9 @@ async function run() {
         // get user status 
         app.get('/user/status/:email', async (req, res) => {
             const email = req.params.email;
+            console.log("status: ",email)
             const user = await usersCollection.findOne({ email: email });
-            // console.log("Status", user);
+            console.log("Status", user);
             return res.send(user);
         })
 
@@ -77,6 +78,31 @@ async function run() {
             res.send(carBrandInfo);
         })
 
+        // get update brand quantity 
+        app.patch('/brand/:categotyName', async (req, res) => {
+            const categotyName = req.params.categotyName;
+            const action = req.body.action;
+            const query = {categotyName: categotyName}
+            const carBrandInfo = await Brand.findOne(query);
+            console.log(carBrandInfo);
+            let quantity = 1;
+            if(action === "increment"){
+                quantity = parseInt(carBrandInfo.quantity) + 1;
+            }
+            else{
+                quantity = parseInt(carBrandInfo.quantity) - 1;
+            }
+
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {quantity: quantity},
+            };
+            const result = await Brand.updateOne(query, updateDoc, options);
+            // console.log(carBrandInfo)
+            // console.log(result)
+            res.send(result);
+        })
+
 
         // get all brand Category  
         app.get('/category', async (req, res) => {
@@ -84,6 +110,17 @@ async function run() {
             const query = {}
             const carCategory = await Category.find(query).toArray();
             res.send(carCategory);
+        })
+
+        
+
+        // get  products by  Seller  
+        app.get('/category/seller/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { sellerEmail: email }
+            // console.log(query);
+            const singleCarCategory = await Category.find(query).toArray();
+            res.send(singleCarCategory);
         })
 
         // get  products by  Category  
@@ -95,11 +132,19 @@ async function run() {
             res.send(singleCarCategory);
         })
 
+        // add Product 
+        app.post('/category/add', async (req, res) => {
+            const product = req.body;
+            // console.log("product: ", product);
+            const result = await Category.insertOne(product);
+            res.send(result);
+        });
+
         // update products 
         app.patch('/category/:id', async (req, res) => {
             const id = req.params.id;
             const brandName = req.body
-            console.log(review);
+            // console.log(review);
             // console.log(id)
             const query = { _id: ObjectId(id) }
             const updatedDoc = {
@@ -125,8 +170,18 @@ async function run() {
         // add user orders 
         app.post('/order/add', async (req, res) => {
             const order = req.body;
-            console.log(order)
+            // console.log(order);
             const result = await ordersCollection.insertOne(order);
+            res.send(result);
+        });
+
+        // get all buyers for single user 
+
+         // get user orders 
+         app.get('/buyers/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { ProductSellerEmail: email }
+            const result = await ordersCollection.find(query).toArray();
             res.send(result);
         });
 
