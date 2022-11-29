@@ -125,11 +125,11 @@ async function run() {
         app.patch('/brand/:categotyName', async (req, res) => {
             const categotyName = req.params?.categotyName;
             const action = req.body.action;
-           console.log("128 brand categotyName: ", categotyName)
+        //  console.log(("128 brand categotyName: ", categotyName)
             const query = {categotyName: categotyName}
             const carBrandInfo = await Brand.findOne(query);
           ////  console.log(carBrandInfo);
-          console.log("132 carBrandInfo ", carBrandInfo )
+       //  console.log(("132 carBrandInfo ", carBrandInfo )
           const options = { upsert: true };
             let quantity = 1;
             if(action === "increment"){
@@ -143,7 +143,7 @@ async function run() {
                 $set: {quantity: quantity},
             };
             const result = await Brand.updateOne(query, updateDoc, options);
-            console.log("145 result ", result )
+         //  console.log(("145 result ", result )
             // console.log(result)
             res.send(result);
         })
@@ -216,7 +216,7 @@ async function run() {
          //  Delete product
          app.delete('/category/:id', async (req, res) => {
             const id = req.params.id;
-            console.log(id)
+         //  console.log((id)
             const filter = { _id: ObjectId(id) };
             const result = await Category.deleteOne(filter);
             res.send(result);
@@ -290,7 +290,7 @@ async function run() {
 
 
 
-      console.log("DB connect")
+   //  console.log(("DB connect")
     }
     finally {
 
